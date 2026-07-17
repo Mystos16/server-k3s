@@ -1,0 +1,25 @@
+# Internal LAN ingress (public exposure is handled by cloudflared).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: seerr
+  namespace: media
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - seerr.neleoz.com
+      secretName: seerr-tls
+  rules:
+    - host: seerr.neleoz.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: seerr
+                port:
+                  number: 80

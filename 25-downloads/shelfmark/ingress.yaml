@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shelfmark
+  namespace: downloads
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: downloads-authelia@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - shelfmark.neleoz.com
+      secretName: shelfmark-tls
+  rules:
+    - host: shelfmark.neleoz.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shelfmark
+                port:
+                  number: 80

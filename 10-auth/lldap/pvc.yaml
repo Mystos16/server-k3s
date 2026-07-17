@@ -1,0 +1,14 @@
+# lldap config/data lives on the boot SSD (small, needs low latency) via
+# k3s local-path provisioner.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lldap-data
+  namespace: auth
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

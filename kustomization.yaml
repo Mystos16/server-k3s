@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Layers applied in dependency order. Each is also runnable standalone
+# via `mise run <layer>`.
+resources:
+  - 00-infra
+  - 10-auth
+  - 20-media
+  - 25-downloads
+  - 30-cloud
+  - 40-web
+  - 50-apps
+  - 60-games

@@ -1,0 +1,27 @@
+# Internal Traefik ingress with cert-manager TLS. Not exposed publicly
+# (public access for select apps goes through cloudflared instead).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lldap
+  namespace: auth
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: auth-authelia@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - lldap.neleoz.com
+      secretName: lldap-tls
+  rules:
+    - host: lldap.neleoz.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lldap
+                port:
+                  number: 80

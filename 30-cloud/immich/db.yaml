@@ -1,0 +1,72 @@
+# Immich Postgres (with pgvecto.rs vector extension). DB on boot SSD via
+# local-path; dumps go to /tank/backup/db/immich later.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-db
+  namespace: cloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-db
+  namespace: cloud
+  labels:
+    app: immich-db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-db
+  template:
+    metadata:
+      labels:
+        app: immich-db
+    spec:
+      containers:
+        - name: postgres
+          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: immich
+            - name: POSTGRES_USER
+              value: immich
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-secrets
+                  key: db-password
+            - name: POSTGRES_INITDB_ARGS
+              value: "--data-checksums"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: db
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: immich-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-db
+  namespace: cloud
+spec:
+  selector:
+    app: immich-db
+  ports:
+    - port: 5432
+      targetPort: 5432

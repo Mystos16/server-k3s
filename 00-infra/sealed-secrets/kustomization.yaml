@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Upstream sealed-secrets controller (Bitnami). Deployed into kube-system by
+# default upstream; we pin it to the infra namespace.
+namespace: infra
+
+resources:
+  - https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.27.1/controller.yaml

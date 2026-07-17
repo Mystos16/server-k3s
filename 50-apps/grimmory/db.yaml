@@ -1,0 +1,79 @@
+# MariaDB for Grimmory (github.com/grimmory-tools/grimmory). DB on boot SSD via
+# local-path; dumps to /tank/backup/db/grimmory later.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grimmory-db
+  namespace: apps
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grimmory-db
+  namespace: apps
+  labels:
+    app: grimmory-db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: grimmory-db
+  template:
+    metadata:
+      labels:
+        app: grimmory-db
+    spec:
+      containers:
+        - name: mariadb
+          image: lscr.io/linuxserver/mariadb:11.4.8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: MYSQL_DATABASE
+              value: grimmory
+            - name: MYSQL_USER
+              value: grimmory
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-secrets
+                  key: db-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-secrets
+                  key: db-root-password
+          volumeMounts:
+            - name: db
+              mountPath: /config
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: grimmory-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grimmory-db
+  namespace: apps
+spec:
+  selector:
+    app: grimmory-db
+  ports:
+    - port: 3306
+      targetPort: 3306

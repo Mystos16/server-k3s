@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-config
+  namespace: auth
+data:
+  configuration.yml: |
+    theme: dark
+    server:
+      address: tcp://0.0.0.0:9091
+    log:
+      level: info
+    authentication_backend:
+      ldap:
+        implementation: lldap
+        address: ldap://lldap.auth.svc.cluster.local:3890
+        base_dn: dc=neleoz,dc=com
+        user: uid=admin,ou=people,dc=neleoz,dc=com
+    session:
+      cookies:
+        - domain: neleoz.com
+          authelia_url: https://auth.neleoz.com
+      redis:
+        host: authelia-redis.auth.svc.cluster.local
+        port: 6379
+    storage:
+      postgres:
+        address: tcp://authelia-db.auth.svc.cluster.local:5432
+        database: authelia
+        username: authelia
+    notifier:
+      filesystem:
+        filename: /config/notification.txt
+    access_control:
+      default_policy: deny
+      rules:
+        # OIDC provider endpoints must stay reachable so apps can complete the
+        # authorization code flow after the user has authenticated.
+        - domain: auth.neleoz.com
+          resources:
+            - "^/api/oidc/.*$"
+          policy: bypass
+        - domain: "*.neleoz.com"
+          policy: two_factor
+    identity_providers:
+      oidc:
+        # HMAC secret + issuer private key are provided via the secrets mount
+        # (AUTHELIA_IDENTITY_PROVIDERS_OIDC_*). See the authelia-secrets secret.
+        clients:
+          - client_id: nextcloud
+            client_name: Nextcloud
+            client_secret: "{{ secret \"/secrets/oidc-nextcloud-secret\" }}"
+            public: false
+            authorization_policy: two_factor
+            require_pkce: true
+            pkce_challenge_method: S256
+            redirect_uris:
+              - https://cloud.neleoz.com/apps/user_oidc/code
+            scopes:
+              - openid
+              - profile
+              - email
+              - groups
+            userinfo_signed_response_alg: none
+          - client_id: immich
+            client_name: Immich
+            client_secret: "{{ secret \"/secrets/oidc-immich-secret\" }}"
+            public: false
+            authorization_policy: two_factor
+            require_pkce: true
+            pkce_challenge_method: S256
+            redirect_uris:
+              - https://photos.neleoz.com/auth/login
+              - https://photos.neleoz.com/user-settings
+              - app.immich:///oauth-callback
+            scopes:
+              - openid
+              - profile
+              - email
+            userinfo_signed_response_alg: none
+          - client_id: jellyseerr
+            client_name: Jellyseerr
+            client_secret: "{{ secret \"/secrets/oidc-jellyseerr-secret\" }}"
+            public: false
+            authorization_policy: two_factor
+            require_pkce: true
+            pkce_challenge_method: S256
+            redirect_uris:
+              - https://seerr.neleoz.com/login/oidc/callback
+              - https://seerr.neleoz.com/api/v1/auth/oidc-callback
+            scopes:
+              - openid
+              - profile
+              - email
+              - groups
+            userinfo_signed_response_alg: none

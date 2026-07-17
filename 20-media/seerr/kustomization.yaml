@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: media
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  # Public access is via cloudflared (see 00-infra/cloudflared). No Traefik
+  # ingress needed, but an internal ingress can be added for LAN access.
+  - ingress.yaml

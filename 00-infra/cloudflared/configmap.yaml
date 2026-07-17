@@ -1,0 +1,31 @@
+# cloudflared tunnel config. Routes only the services you want public.
+# Everything else stays internal (Traefik ingress on the LAN/Tailscale only).
+#
+# Each hostname must also have a CNAME in Cloudflare DNS pointing at
+# <TUNNEL_ID>.cfargotunnel.com (cloudflared can create these automatically
+# when you configure the tunnel).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: infra
+data:
+  config.yaml: |
+    tunnel: home
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    no-autoupdate: true
+    ingress:
+      # ---- public services ----
+      - hostname: shelfmark.neleoz.com
+        service: http://shelfmark.downloads.svc.cluster.local:80
+      - hostname: seerr.neleoz.com
+        service: http://seerr.media.svc.cluster.local:80
+      - hostname: grimmory.neleoz.com
+        service: http://grimmory.apps.svc.cluster.local:80
+      # ---- add later when you want them public ----
+      # - hostname: cloud.neleoz.com
+      #   service: http://nextcloud.cloud.svc.cluster.local:80
+      # - hostname: photos.neleoz.com
+      #   service: http://immich.cloud.svc.cluster.local:80
+      # catch-all (required, must be last)
+      - service: http_status:404

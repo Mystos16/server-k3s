@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seerr
+  namespace: media
+  labels:
+    app: seerr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: seerr
+  template:
+    metadata:
+      labels:
+        app: seerr
+    spec:
+      containers:
+        - name: seerr
+          image: fallenbagel/jellyseerr:latest
+          ports:
+            - name: http
+              containerPort: 5055
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+      volumes:
+        - name: config
+          hostPath:
+            path: /tank/app/seerr
+            type: DirectoryOrCreate

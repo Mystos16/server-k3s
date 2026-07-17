@@ -1,0 +1,65 @@
+# shelfmark — ebook downloader/indexer (github.com/calibrain/shelfmark).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelfmark
+  namespace: downloads
+  labels:
+    app: shelfmark
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shelfmark
+  template:
+    metadata:
+      labels:
+        app: shelfmark
+    spec:
+      containers:
+        - name: shelfmark
+          image: ghcr.io/calibrain/shelfmark:latest
+          ports:
+            - name: http
+              containerPort: 8084
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: FLASK_PORT
+              value: "8084"
+            - name: INGEST_DIR
+              value: /books
+            - name: SEARCH_MODE
+              value: universal
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8084
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: books
+              mountPath: /books
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: config
+          hostPath:
+            path: /tank/app/shelfmark
+            type: DirectoryOrCreate
+        - name: books
+          hostPath:
+            path: /tank/media/books
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /tank/media/downloads
+            type: DirectoryOrCreate

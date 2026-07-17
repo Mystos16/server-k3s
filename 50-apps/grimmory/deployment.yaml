@@ -1,0 +1,73 @@
+# grimmory — ebook library manager (github.com/grimmory-tools/grimmory).
+# Booklore fork; needs a MariaDB backend (see db.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grimmory
+  namespace: apps
+  labels:
+    app: grimmory
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: grimmory
+  template:
+    metadata:
+      labels:
+        app: grimmory
+    spec:
+      containers:
+        - name: grimmory
+          image: ghcr.io/grimmory-tools/grimmory:latest
+          ports:
+            - name: http
+              containerPort: 6060
+          env:
+            - name: USER_ID
+              value: "1000"
+            - name: GROUP_ID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: DATABASE_URL
+              value: jdbc:mariadb://grimmory-db.apps.svc.cluster.local:3306/grimmory
+            - name: DATABASE_USERNAME
+              value: grimmory
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-secrets
+                  key: db-password
+            - name: SWAGGER_ENABLED
+              value: "false"
+            - name: FORCE_DISABLE_OIDC
+              value: "false"
+          readinessProbe:
+            httpGet:
+              path: /api/v1/healthcheck
+              port: 6060
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: books
+              mountPath: /books
+            - name: bookdrop
+              mountPath: /bookdrop
+      volumes:
+        - name: data
+          hostPath:
+            path: /tank/app/grimmory
+            type: DirectoryOrCreate
+        - name: books
+          hostPath:
+            path: /tank/media/books
+            type: DirectoryOrCreate
+        - name: bookdrop
+          hostPath:
+            path: /tank/media/downloads
+            type: DirectoryOrCreate

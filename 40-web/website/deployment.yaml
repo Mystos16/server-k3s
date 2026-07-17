@@ -1,0 +1,34 @@
+# Static website served by nginx. Replace the image with your own built site
+# image, or mount content from /tank/app/web.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website
+  namespace: web
+  labels:
+    app: website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: website
+  template:
+    metadata:
+      labels:
+        app: website
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+      volumes:
+        - name: content
+          hostPath:
+            path: /tank/app/web
+            type: DirectoryOrCreate

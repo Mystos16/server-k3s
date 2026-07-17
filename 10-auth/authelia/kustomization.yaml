@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth
+
+resources:
+  - configmap.yaml
+  - backing.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  # SealedSecret 'authelia-secrets' (JWT, session, storage/encryption keys) — kubeseal
+  # - sealed-secret.yaml

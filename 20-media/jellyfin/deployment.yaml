@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: media
+  labels:
+    app: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+        - name: jellyfin
+          image: jellyfin/jellyfin:latest
+          ports:
+            - name: http
+              containerPort: 8096
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: video
+              mountPath: /media/video
+            - name: music
+              mountPath: /media/music
+            - name: books
+              mountPath: /media/books
+      volumes:
+        - name: config
+          hostPath:
+            path: /tank/app/jellyfin
+            type: DirectoryOrCreate
+        - name: video
+          hostPath:
+            path: /tank/media/video
+            type: DirectoryOrCreate
+        - name: music
+          hostPath:
+            path: /tank/media/music
+            type: DirectoryOrCreate
+        - name: books
+          hostPath:
+            path: /tank/media/books
+            type: DirectoryOrCreate

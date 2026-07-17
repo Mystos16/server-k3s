@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich
+  namespace: cloud
+  labels:
+    app: immich-server
+spec:
+  selector:
+    app: immich-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 2283
